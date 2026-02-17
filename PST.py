@@ -174,14 +174,12 @@ def format_time(seconds):
         return f"{round(days)} days"
     else:
         rounded_years = round(years)
-
-        # Use normal number formatting until 100,000 years
         if rounded_years < 100_000:
             return f"{rounded_years:,} years"
         else:
             return f"{years:.2e} years"
 
-# NEW: generate actionable suggestions
+# generate actionable suggestions
 def generate_suggestions(password, analysis, placement, patterns, found_words, rockyou_hit):
     suggestions = []
 
@@ -219,53 +217,84 @@ def generate_suggestions(password, analysis, placement, patterns, found_words, r
 
     return suggestions
 
-# calculate final strength score
+# calculate final strength score WITH breakdown
 def calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit):
     score = 0
+    breakdown = {}
+
     length = analysis["length"]
 
     if rockyou_hit:
-        return 0
+        breakdown["RockYou Match"] = -100
+        return 0, breakdown
 
-    score += min(length * 4, 40)
+    # length
+    length_score = min(length * 4, 40)
+    score += length_score
+    breakdown["Length Contribution"] = length_score
 
+    # diversity
+    diversity_score = 0
     if analysis["lowercase"]:
-        score += 5
+        diversity_score += 5
     if analysis["uppercase"]:
-        score += 5
+        diversity_score += 5
     if analysis["digits"]:
-        score += 5
+        diversity_score += 5
     if analysis["special"]:
-        score += 10
+        diversity_score += 10
 
-    score += min(int(entropy / 2), 40)
+    score += diversity_score
+    breakdown["Character Diversity"] = diversity_score
 
+    # entropy
+    entropy_score = min(int(entropy / 2), 40)
+    score += entropy_score
+    breakdown["Entropy Contribution"] = entropy_score
+
+    # placement
+    placement_score = 0
     if placement["middle_upper"]:
-        score += 5
+        placement_score += 5
     elif placement["upper_positions"] == [0]:
-        score -= 3
+        placement_score -= 3
 
     if placement["middle_special"]:
-        score += 8
+        placement_score += 8
     elif placement["special_positions"] and all(pos >= length - 2 for pos in placement["special_positions"]):
-        score -= 5
+        placement_score -= 5
 
-    score -= len(found_words) * 10
+    score += placement_score
+    breakdown["Placement Adjustment"] = placement_score
 
-    if length < 8:
-        score -= 10
+    # dictionary
+    dictionary_penalty = -len(found_words) * 10
+    score += dictionary_penalty
+    breakdown["Dictionary Penalty"] = dictionary_penalty
 
-    if password and password[-1].isdigit():
-        score -= 5
+    # short password
+    short_penalty = -10 if length < 8 else 0
+    score += short_penalty
+    breakdown["Short Password Penalty"] = short_penalty
 
+    # numeric suffix
+    suffix_penalty = -5 if password and password[-1].isdigit() else 0
+    score += suffix_penalty
+    breakdown["Numeric Suffix Penalty"] = suffix_penalty
+
+    # patterns
+    pattern_penalty = 0
     if patterns["repeated"]:
-        score -= 10
-
+        pattern_penalty -= 10
     if patterns["sequential"]:
-        score -= 10
+        pattern_penalty -= 10
+
+    score += pattern_penalty
+    breakdown["Pattern Penalty"] = pattern_penalty
 
     score = max(0, min(score, 100))
-    return score
+
+    return score, breakdown
 
 def get_strength_label(score):
     if score == 0:
@@ -282,7 +311,7 @@ def get_strength_label(score):
         return "Very Strong"
 
 # print analysis report
-def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time, suggestions):
+def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, breakdown, crack_time, suggestions):
     print("Password Analysis:")
     print(f"- Length: {analysis['length']}")
     print(f"- Lowercase letters: {analysis['lowercase']}")
@@ -291,11 +320,6 @@ def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entr
     print(f"- Special characters: {analysis['special']}")
     print(f"- Estimated entropy: {entropy:.2f} bits")
     print()
-
-    if patterns["repeated"]:
-        print("- Repeated character sequence detected")
-    if patterns["sequential"]:
-        print("- Sequential character pattern detected")
 
     if found_words:
         for word in found_words:
@@ -309,8 +333,14 @@ def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entr
         print("- Not found in RockYou dataset")
 
     print()
-    print(f"Strength: {get_strength_label(score)}")
+    print("Score Breakdown:")
+    for key, value in breakdown.items():
+        sign = "+" if value > 0 else ""
+        print(f"- {key}: {sign}{value}")
+
+    print()
     print(f"Final Score: {score} / 100")
+    print(f"Strength: {get_strength_label(score)}")
     print()
     print(f"Estimated brute-force time (RTX 4070, SHA-256 @ 5000 MH/s): ~{crack_time} (average case)")
 
@@ -318,13 +348,11 @@ def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entr
         print("Real-world attack time: Instant (password exists in breach datasets)")
 
     print("\nSuggested Improvements:")
-
     if suggestions:
         for suggestion in suggestions:
             print(f"- {suggestion}")
     else:
         print("- No major weaknesses detected. This password follows strong security practices.")
-
 
 # main execution
 def main():
@@ -369,13 +397,11 @@ def main():
     found_words = find_dictionary_words(password, combined_words)
     entropy = calculate_entropy(password, analysis)
     crack_time = estimate_bruteforce_time(entropy)
-    score = calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit)
-
+    score, breakdown = calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit)
     suggestions = generate_suggestions(password, analysis, placement, patterns, found_words, rockyou_hit)
 
     print()
-    print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time, suggestions)
+    print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, breakdown, crack_time, suggestions)
 
 if __name__ == "__main__":
     main()
-
