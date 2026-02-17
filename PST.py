@@ -58,7 +58,6 @@ def analyze_patterns(password):
     repeated = False
     sequential = False
 
-    # repeated character detection (3+ in a row)
     repeat_count = 1
     for i in range(1, len(password)):
         if password[i] == password[i - 1]:
@@ -68,7 +67,6 @@ def analyze_patterns(password):
         else:
             repeat_count = 1
 
-    # sequential detection (3+ increasing or decreasing)
     for i in range(len(password) - 2):
         a, b, c = password[i], password[i + 1], password[i + 2]
 
@@ -149,7 +147,7 @@ def estimate_bruteforce_time(entropy):
     if entropy <= 0:
         return "Instantly"
 
-    hash_rate = 5_000_000_000  # 5e9 hashes/sec
+    hash_rate = 5_000_000_000
 
     total_guesses = 2 ** entropy
     average_guesses = total_guesses / 2
@@ -176,6 +174,44 @@ def format_time(seconds):
         return f"{round(days)} days"
     else:
         return f"{years:.2e} years"
+
+# NEW: generate actionable suggestions
+def generate_suggestions(password, analysis, placement, patterns, found_words, rockyou_hit):
+    suggestions = []
+
+    if rockyou_hit:
+        suggestions.append("Do not use passwords found in breach datasets.")
+
+    if analysis["length"] < 12:
+        suggestions.append("Increase password length to at least 12–14 characters.")
+
+    if not analysis["special"]:
+        suggestions.append("Add special characters in non-predictable positions.")
+
+    if not analysis["uppercase"]:
+        suggestions.append("Include uppercase letters beyond the first position.")
+
+    if not analysis["digits"]:
+        suggestions.append("Include numbers that are not simple suffixes.")
+
+    if placement["special_positions"] and all(
+        pos >= analysis["length"] - 2 for pos in placement["special_positions"]
+    ):
+        suggestions.append("Avoid placing special characters only at the end.")
+
+    if password and password[-1].isdigit():
+        suggestions.append("Avoid predictable numeric suffixes.")
+
+    if patterns["repeated"]:
+        suggestions.append("Avoid repeated character sequences (e.g., aaa, 111).")
+
+    if patterns["sequential"]:
+        suggestions.append("Avoid sequential patterns (e.g., 123, abc).")
+
+    if found_words:
+        suggestions.append("Avoid dictionary words, names, or common phrases.")
+
+    return suggestions
 
 # calculate final strength score
 def calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit):
@@ -216,7 +252,6 @@ def calculate_score(password, analysis, placement, patterns, entropy, found_word
     if password and password[-1].isdigit():
         score -= 5
 
-    # pattern penalties
     if patterns["repeated"]:
         score -= 10
 
@@ -241,7 +276,7 @@ def get_strength_label(score):
         return "Very Strong"
 
 # print analysis report
-def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time):
+def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time, suggestions):
     print("Password Analysis:")
     print(f"- Length: {analysis['length']}")
     print(f"- Lowercase letters: {analysis['lowercase']}")
@@ -275,6 +310,15 @@ def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entr
 
     if rockyou_hit:
         print("Real-world attack time: Instant (password exists in breach datasets)")
+
+    print("\nSuggested Improvements:")
+
+    if suggestions:
+        for suggestion in suggestions:
+            print(f"- {suggestion}")
+    else:
+        print("- No major weaknesses detected. This password follows strong security practices.")
+
 
 # main execution
 def main():
@@ -321,9 +365,10 @@ def main():
     crack_time = estimate_bruteforce_time(entropy)
     score = calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit)
 
+    suggestions = generate_suggestions(password, analysis, placement, patterns, found_words, rockyou_hit)
+
     print()
-    print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time)
+    print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time, suggestions)
 
 if __name__ == "__main__":
     main()
-
