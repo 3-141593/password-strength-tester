@@ -4,7 +4,7 @@ A Python-based password analysis tool that evaluates password security using rea
 
 The purpose of this project is to demonstrate practical cybersecurity concepts such as brute-force resistance, dictionary attacks, and human password behavior in a clear and accessible way.
 
-Passwords are analyzed locally only; they are never stored, logged, or transmitted.
+All analysis is performed locally. Passwords are never stored, logged, or transmitted.
 
 ---
 
@@ -17,7 +17,7 @@ Passwords are analyzed locally only; they are never stored, logged, or transmitt
   Assigns a security score from 0 to 100, weighted by entropy, character variety, and detected weaknesses.
 
 - **Brute-Force Time Estimation (GPU Based)**  
-  Estimates the time required to crack the password, assuming the password hash is SHA-256 and is being attacked using an NVIDIA RTX 4070 (5,000 MH/s) under an offline attack model.
+  Estimates the time required to crack the password, assuming a SHA-256 hash under an offline attack using an NVIDIA RTX 4070 (5,000 MH/s) under an offline attack model.
   (Note: Brute-force estimates assume a fully random password of equivalent length and character set; real-world cracking time may be significantly lower due to dictionary and pattern-based attacks.)
 
 - **RockYou Dictionary Check**  
