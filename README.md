@@ -30,7 +30,10 @@ Passwords are analyzed locally only; they are never stored, logged, or transmitt
   Identifies predictable symbol placement patterns (e.g. symbols only at the end) that reduce effective password strength.
 
 - **Pattern & Repetition Detection**  
-  Flags common weaknesses such as sequential characters (`1234`), repeated characters (`aaa`), and keyboard patterns (`qwerty`, `asdf`).
+  Flags common weaknesses such as sequential characters and repeated characters.
+
+- **Transparent Score Breakdown**  
+  Clearly shows how the final score was calculated, improving educational value and transparency.
 
 - **Actionable Security Feedback**  
   Explains detected weaknesses and suggests changes to improve password strength.
@@ -41,26 +44,40 @@ Passwords are analyzed locally only; they are never stored, logged, or transmitt
 
 ```text
 ~$: python PST.py
-Enter password: Hackme1
+Enter password: BruteThis!
 
-Password Strength: Very Weak
-Score: 18 / 100
 
-- Password is too short
-- Contains dictionary word: "hack"
-- Capitalized dictionary word detected
-- Predictable digit suffix ("1")
-- No special characters detected
-- Password not found in common breach datasets
+Password Analysis:
+- Length: 10
+- Lowercase letters: True
+- Uppercase letters: True
+- Digits: False
+- Special characters: True
+- Estimated entropy: 63.92 bits
 
-Estimated brute-force time (RTX 4070, SHA-256): ~2 hours (average)
+- Contains dictionary word: "this"
+- Not found in RockYou dataset
+
+Score Breakdown:
+- Length Contribution: +40
+- Character Diversity: +20
+- Entropy Contribution: +31
+- Placement Adjustment: 0
+- Dictionary Penalty: -10
+- Short Password Penalty: 0
+- Numeric Suffix Penalty: 0
+- Pattern Penalty: 0
+
+Final Score: 81 / 100
+Strength: Strong
+
+Estimated brute-force time (RTX 4070, SHA-256 @ 5000 MH/s): ~55 years (average case)
 
 Suggested Improvements:
-- Increase password length to at least 12 characters
-- Avoid dictionary words or common phrases
-- Add special characters in non-predictable positions
-- Avoid simple digit suffixes
-
+- Increase password length to at least 12–14 characters.
+- Include numbers that are not simple suffixes.
+- Avoid placing special characters only at the end.
+- Avoid dictionary words, names, or common phrases.
 ```
 
 ## Disclaimer
