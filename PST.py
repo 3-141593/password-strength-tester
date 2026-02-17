@@ -273,6 +273,9 @@ def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entr
     print()
     print(f"Estimated brute-force time (RTX 4070, SHA-256 @ 5000 MH/s): ~{crack_time} (average case)")
 
+    if rockyou_hit:
+        print("Real-world attack time: Instant (password exists in breach datasets)")
+
 # main execution
 def main():
     password = get_password()
@@ -323,3 +326,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
