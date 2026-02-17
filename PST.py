@@ -38,12 +38,12 @@ def analyze_placement(password):
     for i, char in enumerate(password):
         if char.isupper():
             upper_positions.append(i)
-            if i > 1 and i < length - 1:
+            if 1 < i < length - 1:
                 middle_upper = True
 
         if not char.isalnum():
             special_positions.append(i)
-            if i > 1 and i < length - 2:
+            if 1 < i < length - 2:
                 middle_special = True
 
     return {
@@ -51,6 +51,36 @@ def analyze_placement(password):
         "middle_special": middle_special,
         "special_positions": special_positions,
         "upper_positions": upper_positions
+    }
+
+# detect repeated characters and sequential patterns
+def analyze_patterns(password):
+    repeated = False
+    sequential = False
+
+    # repeated character detection (3+ in a row)
+    repeat_count = 1
+    for i in range(1, len(password)):
+        if password[i] == password[i - 1]:
+            repeat_count += 1
+            if repeat_count >= 3:
+                repeated = True
+        else:
+            repeat_count = 1
+
+    # sequential detection (3+ increasing or decreasing)
+    for i in range(len(password) - 2):
+        a, b, c = password[i], password[i + 1], password[i + 2]
+
+        if a.isalnum() and b.isalnum() and c.isalnum():
+            if ord(b) == ord(a) + 1 and ord(c) == ord(b) + 1:
+                sequential = True
+            if ord(b) == ord(a) - 1 and ord(c) == ord(b) - 1:
+                sequential = True
+
+    return {
+        "repeated": repeated,
+        "sequential": sequential
     }
 
 # load smaller wordlists into memory
@@ -114,12 +144,12 @@ def calculate_entropy(password, analysis):
 
     return len(password) * math.log2(pool_size)
 
-# estimate brute-force cracking time (RTX 4070, SHA-256)
+# estimate brute-force cracking time
 def estimate_bruteforce_time(entropy):
     if entropy <= 0:
         return "Instantly"
 
-    hash_rate = 5_000_000_000  # 5e9 hashes/sec (RTX 4070)
+    hash_rate = 5_000_000_000  # 5e9 hashes/sec
 
     total_guesses = 2 ** entropy
     average_guesses = total_guesses / 2
@@ -127,7 +157,6 @@ def estimate_bruteforce_time(entropy):
 
     return format_time(seconds)
 
-# convert seconds to readable format
 def format_time(seconds):
     if seconds < 1:
         return "< 1 second"
@@ -148,9 +177,8 @@ def format_time(seconds):
     else:
         return f"{years:.2e} years"
 
-
 # calculate final strength score
-def calculate_score(password, analysis, placement, entropy, found_words, rockyou_hit):
+def calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit):
     score = 0
     length = analysis["length"]
 
@@ -188,6 +216,13 @@ def calculate_score(password, analysis, placement, entropy, found_words, rockyou
     if password and password[-1].isdigit():
         score -= 5
 
+    # pattern penalties
+    if patterns["repeated"]:
+        score -= 10
+
+    if patterns["sequential"]:
+        score -= 10
+
     score = max(0, min(score, 100))
     return score
 
@@ -206,7 +241,7 @@ def get_strength_label(score):
         return "Very Strong"
 
 # print analysis report
-def print_analysis(analysis, placement, found_words, rockyou_hit, entropy, score, crack_time):
+def print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time):
     print("Password Analysis:")
     print(f"- Length: {analysis['length']}")
     print(f"- Lowercase letters: {analysis['lowercase']}")
@@ -215,6 +250,11 @@ def print_analysis(analysis, placement, found_words, rockyou_hit, entropy, score
     print(f"- Special characters: {analysis['special']}")
     print(f"- Estimated entropy: {entropy:.2f} bits")
     print()
+
+    if patterns["repeated"]:
+        print("- Repeated character sequence detected")
+    if patterns["sequential"]:
+        print("- Sequential character pattern detected")
 
     if found_words:
         for word in found_words:
@@ -272,13 +312,14 @@ def main():
 
     analysis = analyze_characters(password)
     placement = analyze_placement(password)
+    patterns = analyze_patterns(password)
     found_words = find_dictionary_words(password, combined_words)
     entropy = calculate_entropy(password, analysis)
     crack_time = estimate_bruteforce_time(entropy)
-    score = calculate_score(password, analysis, placement, entropy, found_words, rockyou_hit)
+    score = calculate_score(password, analysis, placement, patterns, entropy, found_words, rockyou_hit)
 
     print()
-    print_analysis(analysis, placement, found_words, rockyou_hit, entropy, score, crack_time)
+    print_analysis(analysis, placement, patterns, found_words, rockyou_hit, entropy, score, crack_time)
 
 if __name__ == "__main__":
     main()
