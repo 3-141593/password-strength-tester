@@ -173,7 +173,13 @@ def format_time(seconds):
     elif days < 365:
         return f"{round(days)} days"
     else:
-        return f"{years:.2e} years"
+        rounded_years = round(years)
+
+        # Use normal number formatting until 100,000 years
+        if rounded_years < 100_000:
+            return f"{rounded_years:,} years"
+        else:
+            return f"{years:.2e} years"
 
 # NEW: generate actionable suggestions
 def generate_suggestions(password, analysis, placement, patterns, found_words, rockyou_hit):
@@ -372,3 +378,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
