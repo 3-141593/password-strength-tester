@@ -1,6 +1,6 @@
 ROCKYOU_FILES = [
-    "wordlists/rockyou_sample.txt",
-   #"wordlists/rockyou1.txt",
-   #"wordlists/rockyou2.txt",
-   #"wordlists/rockyou3.txt"
+    "rockyou/rockyou_sample.txt",
+   #"rockyou/rockyou1.txt",
+   #"rockyou/rockyou2.txt",
+   #"rockyou/rockyou3.txt"
 ]
