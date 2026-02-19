@@ -1,4 +1,5 @@
 import math
+import os
 from rockyou_config import ROCKYOU_FILES
 
 # get password
@@ -371,18 +372,22 @@ def main():
     for filepath in wordlist_files:
         combined_words.update(load_wordlist(filepath))
 
-    rockyou_files = ROCKYOU_FILES
+    rockyou_directory = "rockyou"
+
+    rockyou_files = []
+
+    if os.path.exists(rockyou_directory):
+        for filename in os.listdir(rockyou_directory):
+            if filename.endswith(".txt"):
+                rockyou_files.append(os.path.join(rockyou_directory, filename))
 
     rockyou_hit = False
-
-    import os
 
     for filepath in rockyou_files:
         if os.path.exists(filepath):
             if check_large_wordlist(password, filepath):
              rockyou_hit = True
              break
-
 
     if rockyou_hit:
         print("PASSWORD COMPROMISED")
