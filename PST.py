@@ -1,6 +1,5 @@
 import math
 import os
-from rockyou_config import ROCKYOU_FILES
 
 # get password
 def get_password():
@@ -409,3 +408,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
