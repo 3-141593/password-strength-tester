@@ -21,7 +21,12 @@ All analysis is performed locally. Passwords are never stored, logged, or transm
   (Note: Brute-force estimates assume a fully random password of equivalent length and character set; real-world cracking time may be significantly lower due to dictionary and pattern-based attacks.)
 
 - **RockYou Dictionary Check**  
-  Detects whether the password appears in the `rockyou.txt` password list, indicating immediate compromise risk.
+  Detects whether the password appears in a known breach wordlist, indicating immediate compromise risk.
+
+  A small sample of the RockYou dataset is included by default for lightweight testing.  
+  Users may optionally add their own RockYou files or custom wordlists by placing `.txt` files inside the `rockyou/` directory.
+
+  The program will automatically scan and use all `.txt` files found in that directory.
 
 - **Dictionary Word & Name Detection**  
   Checks whether the password contains common dictionary words or names (including substrings), which significantly reduce effective entropy.
